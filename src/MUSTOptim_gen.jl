@@ -26,84 +26,85 @@ module MUSTOptim_gen
     include("output.jl")
     include("plots.jl")
     include("sensitivity.jl")
-end
 
-""" contract(path::String)
-Função principal de execução da contratação ótima do MUST
-Args.:
-path: diretório dos arquivos de parâmetros e de dados de entrada
-"""
-function demandcontract(path::String)
-    
-    # Script de execução
-    @info("Início do estudo de contratação do MUST.")
 
-    
-    # Definição de regra de peridicidade de contrato
-    # "contcicleflag" é uma flag que define se o ciclo contratual será igual ao número de meses de periodicidade do contrato (Flag = 1)(ex: a sobrecontratação é avaliada para cada ciclo de nper meses); 
-    # ou se ciclo do contrato é sempre anual e com um ou mais contratos por ano (Flag = 0)(ex: a sobrecontratação é sempre avaliada a cada 12 meses)
-    # Para o projeto Energisa MUST será fixada (Flag = 0). Entretanto todo o código está preparado para tratar a contcicleflag = 1.
+    """ contract(path::String)
+    Função principal de execução da contratação ótima do MUST
+    Args.:
+    path: diretório dos arquivos de parâmetros e de dados de entrada
+    """
+    function demandcontract(path::String)
         
-    # Leitura dos arquivos de dados
-    dimensions, optimparam, transparam, busdata, peaksnames, study_name = readdata(path)
-    
-    @info("Leitura de dados completa.")
+        # Script de execução
+        @info("Início do estudo de contratação do MUST.")
 
-    # Otimização dos contratos
-    optimalresults, optimalcontract, riskindicators, plotdatamw, plotdatapercent = optimizecontract(transparam,dimensions,optimparam,busdata)
-    
-    # Escrita de saídas
-    infotuple = (dimensions, optimparam, peaksnames)
-
-    for con in transparam.busnames # fronteiras de MUST
-        # Pasta de saída dos resultados
-        out_path = joinpath(path, "Resultados", "$study_name", "$con")
-        mkpath(out_path)
-
-        @info("Início da escrita de arquivos de saída para a conexão $con.")
-
-        # Escrita do relatório de sáida
-        writeresultscsv(out_path, riskindicators, con, optimparam, dimensions, optimalcontract, peaksnames, transparam)
-
-        # Geração dos gráficos de saída
-        plotdatamwtuple = (out_path, con, plotdatamw[con])
-        plotdatapercenttuple = (out_path, con, plotdatapercent[con])
-
-        plotcen(infotuple, plotdatamwtuple, transparam)
-        plotcenMUST(infotuple, plotdatamwtuple, transparam)
-        plotpercentmonth(infotuple,plotdatapercenttuple)
-
-        @info("Fim da escrita de arquivos de saída para a conexão $con.")
-    end
-    
-    @info("Fim da execução do módulo de otimização e escrita de arquivos de saída para todas as conexões.")
-
-    return nothing
-    
-end
-
-""" sensitivityanalisys(path::String, tariffoptions::Array{String}, initialvalue::FLoat64, finalvalue::Float64, step::Float64)
-Performs a tariff sensitivity analisys 
-Args.:
-path: diretório dos arquivos de parâmetros e de dados de entrada
-"""
-function sensitivity(path::String,tariff_options::Array{String},initial_value::Float64,final_value::Float64,step::Float64, month::Int64, year::Int64)
-    for tariff_in_analisys in tariff_options
-
+        
+        # Definição de regra de peridicidade de contrato
+        # "contcicleflag" é uma flag que define se o ciclo contratual será igual ao número de meses de periodicidade do contrato (Flag = 1)(ex: a sobrecontratação é avaliada para cada ciclo de nper meses); 
+        # ou se ciclo do contrato é sempre anual e com um ou mais contratos por ano (Flag = 0)(ex: a sobrecontratação é sempre avaliada a cada 12 meses)
+        # Para o projeto Energisa MUST será fixada (Flag = 0). Entretanto todo o código está preparado para tratar a contcicleflag = 1.
+            
+        # Leitura dos arquivos de dados
         dimensions, optimparam, transparam, busdata, peaksnames, study_name = readdata(path)
         
-        # Tariff sensitivity study
-        optimalresults_sensitivity, optimalcontract_sensitivity, riskindicators_sensitivity, plotdatamw_sensitivity, plotdatapercent_sensitivity, optimparam, transparam = 
-            tariff_sensitivity(tariff_in_analisys, initial_value, final_value, step, optimparam, busdata, transparam, dimensions)
+        @info("Leitura de dados completa.")
 
-            plot_tariff_sensitivity(param_path, study_name, tariff_in_analisys, initial_value, final_value, step, optimalcontract_sensitivity, plotdatamw_sensitivity, optimparam, 
-            busdata, transparam, peaksnames, riskindicators_sensitivity, month, year, dimensions)
+        # Otimização dos contratos
+        optimalresults, optimalcontract, riskindicators, plotdatamw, plotdatapercent = optimizecontract(transparam,dimensions,optimparam,busdata)
+        
+        # Escrita de saídas
+        infotuple = (dimensions, optimparam, peaksnames)
 
-        # Risk sensitivity study
-        optimalresults_risk, optimalcontract_risk, riskindicators_risk, plotdatamw_risk, plotdatapercent_risk, optimparam, transparam = risk_sensitivity(initial_value, final_value,
-            step, optimparam, busdata, transparam, dimensions)
+        for con in transparam.busnames # fronteiras de MUST
+            # Pasta de saída dos resultados
+            out_path = joinpath(path, "Resultados", "$study_name", "$con")
+            mkpath(out_path)
 
-        plot_risk_sensitivity(param_path, study_name, initial_value, final_value, step, optimalcontract_risk, plotdatamw_risk, optimparam, busdata, transparam, peaksnames,
-            riskindicators_risk, month, year, dimensions)
+            @info("Início da escrita de arquivos de saída para a conexão $con.")
+
+            # Escrita do relatório de sáida
+            writeresultscsv(out_path, riskindicators, con, optimparam, dimensions, optimalcontract, peaksnames, transparam)
+
+            # Geração dos gráficos de saída
+            plotdatamwtuple = (out_path, con, plotdatamw[con])
+            plotdatapercenttuple = (out_path, con, plotdatapercent[con])
+
+            plotcen(infotuple, plotdatamwtuple, transparam)
+            plotcenMUST(infotuple, plotdatamwtuple, transparam)
+            plotpercentmonth(infotuple,plotdatapercenttuple)
+
+            @info("Fim da escrita de arquivos de saída para a conexão $con.")
+        end
+        
+        @info("Fim da execução do módulo de otimização e escrita de arquivos de saída para todas as conexões.")
+
+        return nothing
+        
+    end
+
+    """ sensitivityanalisys(path::String, tariffoptions::Array{String}, initialvalue::FLoat64, finalvalue::Float64, step::Float64)
+    Performs a tariff sensitivity analisys 
+    Args.:
+    path: diretório dos arquivos de parâmetros e de dados de entrada
+    """
+    function sensitivity(path::String,tariff_options::Array{String},initial_value::Float64,final_value::Float64,step::Float64, month::Int64, year::Int64)
+        for tariff_in_analisys in tariff_options
+
+            dimensions, optimparam, transparam, busdata, peaksnames, study_name = readdata(path)
+            
+            # Tariff sensitivity study
+            optimalresults_sensitivity, optimalcontract_sensitivity, riskindicators_sensitivity, plotdatamw_sensitivity, plotdatapercent_sensitivity, optimparam, transparam = 
+                tariff_sensitivity(tariff_in_analisys, initial_value, final_value, step, optimparam, busdata, transparam, dimensions)
+
+                plot_tariff_sensitivity(path, study_name, tariff_in_analisys, initial_value, final_value, step, optimalcontract_sensitivity, plotdatamw_sensitivity, optimparam, 
+                busdata, transparam, peaksnames, riskindicators_sensitivity, month, year, dimensions)
+
+            # Risk sensitivity study
+            optimalresults_risk, optimalcontract_risk, riskindicators_risk, plotdatamw_risk, plotdatapercent_risk, optimparam, transparam = risk_sensitivity(initial_value, final_value,
+                step, optimparam, busdata, transparam, dimensions)
+
+            plot_risk_sensitivity(path, study_name, initial_value, final_value, step, optimalcontract_risk, plotdatamw_risk, optimparam, busdata, transparam, peaksnames,
+                riskindicators_risk, month, year, dimensions)
+        end
     end
 end
