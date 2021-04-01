@@ -108,16 +108,16 @@ function readdata(param_path::String)
 
     @info("Leitura de parâmetros completa.")
 
-    completeflag,~,evaluateflag, flextolflag, overcontflag, nmonthper, ϵU, ϵS, α, λ, ηcontT, ηcontD = readintcsv(pathoptions,["TRIGGERCOMPLETE";
+    completeflag,~,evaluateflag, flextolflag, overcontflag, nper, ϵU, ϵS, α, λ, ηcontT, ηcontD = readintcsv(pathoptions,["TRIGGERCOMPLETE";
         "TRIGGERTOPOLOGY";"TRIGGEREVALUATE";"TRIGGERFLEXTOL";"TRIGGEROVERCONT";"NUMPER";"UNDERCTOL";"OVERCTOL";"ALFA";"LAMBDA";"TRANSMINCONT";"DISTMINCONT"])
     completeflag = Int(completeflag)
 
     # Restrição do número de meses em um ciclo de contratação. Deve ser 1, 2, 3, 6 ou 12
-    if isempty(findall((in)(nmonthper),[1,2,3,4,6,12]))
+    if isempty(findall((in)(nper),[1,2,3,4,6,12]))
         error("O número de meses que carateriza um ciclo de contratação deve ser 1, 2, 3, 4, 6 ou 12.")
     else
-        nper = Int(1) # número de períodos contratuais (contratos) dentro de um ciclo de contrato
-        nmonths = Int(nmonthper) # número de meses que formam um ciclo contratual
+        nmonths = 12 # Fixa a avaliação do custo a cada ano (12 meses)
+        nper = Int(nper) # número de períodos contratuais (contratos) dentro de um ano
     end
 
     # Aquisição de dados de acordo com o tipo de simulação de cenários

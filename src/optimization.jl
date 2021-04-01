@@ -288,7 +288,7 @@ function evaluateMUSTD(vlM::Dict{Int64,Dict{Int64,Vector{Float64}}},con::String,
 end
 
 """ Função que define o modelo base de otimização do MUST """
-function baseMUSTmodel(SOLVER, con::String, busdata::Dict, optimparam::OptimParameters, dimensions::Dimensions, transparam::TransGeneralParam)
+function baseMUSTmodel(con::String, busdata::Dict, optimparam::OptimParameters, dimensions::Dimensions, transparam::TransGeneralParam)
     
     # Declaração dos conjuntos de indices fixos
     P = optimparam.peaksid
@@ -350,7 +350,7 @@ end
 function optimizeMUST(con::String,optimparam::OptimParameters,transparam::TransGeneralParam,busdata::Dict,dimensions::Dimensions, tol::Float64)
 
     # MODELO MATEMÁTICO
-    contract_optim, (P, Ω, Months, Per, A, K, per_map) = baseMUSTmodel(SOLVER, con, busdata, optimparam, dimensions, transparam)
+    contract_optim, (P, Ω, Months, Per, A, K, per_map) = baseMUSTmodel(con, busdata, optimparam, dimensions, transparam)
 
     # Declaração e Domínio das variáveis de decisão
     @variables contract_optim begin

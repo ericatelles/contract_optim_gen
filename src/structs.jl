@@ -3,7 +3,7 @@ mutable struct Dimensions
     npeaks::Int64 # Número de postos tarifários (geralmente "PONTA" e "FORA PONTA")
     nscen::Int64 # Número de cenários
     nper::Int64 # Número de períodos de contrato dentro do ciclo de contratação
-    nmonths::Int64 # Número de meses do ciclo de contratação
+    nmonths::Int64 # Número de meses do ano
     nyear::Int64 # Número de anos
     ntop::Int64 # Número de topologias
 end

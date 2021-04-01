@@ -11,7 +11,7 @@ module MUSTOptim_gen
     export OptimParameters, TransGeneralParam, DistGeneralParam, BusData, OptimalResults, 
         RiskIndicators, PlotDatamw, PlotDatapercent, Dimensions # arquivo structs.jl
     export readintcsv, busdatainit, createbusdata, datesadjust, readplftop, readplf, calculatedim,
-        readplfresults, calculateprobtop, readsimresults, readdata # arquivo readfile.jl
+        readplfresults, calculateprobtop, readsimresults, readdata, pathinput, open_parametersfile # arquivo readfile.jl
     export optimizeMUST, baseMUSTmodel, filloptimalcont, evaluateMUSTD, optimizecontract  # arquivo optimization.jl
     export calculateCVaR, calculateriskmesur, writeresultscsv # arquivo output.jl
     export plotdatamwconstruct, plotcen, plotcenMUST, plotultrapcenMUST, plotsobreccenMUST,
@@ -96,14 +96,25 @@ module MUSTOptim_gen
             optimalresults_sensitivity, optimalcontract_sensitivity, riskindicators_sensitivity, plotdatamw_sensitivity, plotdatapercent_sensitivity, optimparam, transparam = 
                 tariff_sensitivity(tariff_in_analisys, initial_value, final_value, step, optimparam, busdata, transparam, dimensions)
 
-                plot_tariff_sensitivity(path, study_name, tariff_in_analisys, initial_value, final_value, step, optimalcontract_sensitivity, plotdatamw_sensitivity, optimparam, 
+            plot_tariff_sensitivity(path, study_name, tariff_in_analisys, initial_value, final_value, step, optimalcontract_sensitivity, plotdatamw_sensitivity, optimparam, 
                 busdata, transparam, peaksnames, riskindicators_sensitivity, month, year, dimensions)
 
             # Risk sensitivity study
+            dimensions, optimparam, transparam, busdata, peaksnames, study_name = readdata(path)
+
             optimalresults_risk, optimalcontract_risk, riskindicators_risk, plotdatamw_risk, plotdatapercent_risk, optimparam, transparam = risk_sensitivity(initial_value, final_value,
                 step, optimparam, busdata, transparam, dimensions)
 
             plot_risk_sensitivity(path, study_name, initial_value, final_value, step, optimalcontract_risk, plotdatamw_risk, optimparam, busdata, transparam, peaksnames,
+                riskindicators_risk, month, year, dimensions)
+
+            # Risk sensitivity objective function study
+            dimensions, optimparam, transparam, busdata, peaksnames, study_name = readdata(path)
+            
+            optimalresults_risk, optimalcontract_risk, riskindicators_risk, plotdatamw_risk, plotdatapercent_risk, optimparam, transparam = risk_fobj_sensitivity(initial_value, final_value,
+                step, optimparam, busdata, transparam, dimensions)
+
+            plot_risk_fobj_sensitivity(path, study_name, initial_value, final_value, step, optimalcontract_risk, plotdatamw_risk, optimparam, busdata, transparam, peaksnames,
                 riskindicators_risk, month, year, dimensions)
         end
     end

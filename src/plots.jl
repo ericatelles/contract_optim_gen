@@ -113,30 +113,30 @@ function plotcen(infotuple::Tuple{Dimensions,OptimParameters,Dict},plotdatamwtup
             y_interval = 1
         end
 
-        yticks_base = floor(minimum(plotdata[p].f)):y_interval:ceil(maximum(plotdata[p].f))+y_interval
-        ylims_base = (floor(minimum(plotdata[p].f)),ceil(maximum(plotdata[p].f))+y_interval)
+        yticks_base = floor(minimum(plotdata[p].f))-4*y_interval:y_interval:ceil(maximum(plotdata[p].f))+y_interval
+        ylims_base = (floor(minimum(plotdata[p].f))-4*y_interval,ceil(maximum(plotdata[p].f))+y_interval)
         
-        plot(legend=:outertopright)
-        plot!(plotdata[p].f[:,1], color = :black,label = "", xticks = xticks_base, yticks = yticks_base, ylims = ylims_base)
+        plot(legend=:bottomright, foreground_color_legend = nothing)
+        plot!(plotdata[p].f[:,1], color = :lightgray,label = "", xticks = xticks_base, yticks = yticks_base, ylims = ylims_base)
 
-        plot!(plotdata[p].f[:,2:end], color = :black,label = "")
+        plot!(plotdata[p].f[:,2:end], color = :lightgray,label = "")
         xlabel!("Months")
         ylabel!("MW")
 
         # title!("Cenários de máxima injeção mensal - "*con*" "*peaksnames[p])
         savefig(joinpath(out_path,"cenarios_$con$(peaksnames[p]).png"))
 
-        plot(legend=:outertopright)
-        plot!(plotdata[p].f[:,1], color = :black,label = "Scenarios", xticks = xticks_base, 
+        plot(legend=:bottomright, foreground_color_legend = nothing)
+        plot!(plotdata[p].f[:,1], color = :lightgray,label = "Scenarios", xticks = xticks_base, 
             yticks = yticks_base, ylims = ylims_base)
         
-        plot!(plotdata[p].f[:,2:end], color = :black,label = "")
+        plot!(plotdata[p].f[:,2:end], color = :lightgray,label = "")
 
-        plot!(plotdata[p].optimalM,color = :red,label = "Optimal contract",linewidth=2.5)
-        plot!(plotdata[p].penalty,color = :red,label = "Penalty limits" ,linewidth=2.5, linestyle=:dash)
-        plot!(plotdata[p].overcont,color = :red,label = "" ,linewidth=2.5, linestyle=:dash)
-        plot!(plotdata[p].optimalM .* (1+transparam.ϵU),color = :gray,label = "Regulated tolerance",linewidth=2.5, linestyle=:dash)
-        plot!(plotdata[p].optimalM .* (1-transparam.ϵS),color = :gray,label = "",linewidth=2.5, linestyle=:dash)
+        plot!(plotdata[p].penalty,color = :orange,label = "Penalty limits" ,linewidth=4.5)
+        plot!(plotdata[p].overcont,color = :orange,label = "" ,linewidth=4.5)
+        plot!(plotdata[p].optimalM,color = :blue,label = "Optimal contract",linewidth=4.5)
+        plot!(plotdata[p].optimalM .* (1+transparam.ϵU),color = :blue,label = "Regulated tolerance",linestyle=:dash,linewidth=5)
+        plot!(plotdata[p].optimalM .* (1-transparam.ϵS),color = :blue,label = "",linewidth=5,linestyle=:dash)
 
         xlabel!("Months")
         ylabel!("MW")
@@ -162,10 +162,12 @@ function plotcenMUST(infotuple::Tuple{Dimensions,OptimParameters,Dict},plotdatam
             y_interval = 1
         end
         
-        yticks_base = floor(minimum(plotdata[p].f)):y_interval:ceil(maximum(plotdata[p].f))+y_interval
-        ylims_base = (floor(minimum(plotdata[p].f)),ceil(maximum(plotdata[p].f))+y_interval)
+        yticks_base = floor(minimum(plotdata[p].f))-4*y_interval:y_interval:ceil(maximum(plotdata[p].f))+y_interval
+        ylims_base = (floor(minimum(plotdata[p].f))-4*y_interval,ceil(maximum(plotdata[p].f))+y_interval)
+        # yticks_base = 0:10:100
+        # ylims_base = (0,100)
 
-        plot(legend=:outertopright)
+        plot(legend=:bottomright, foreground_color_legend = nothing)
         plot!(plotdata[p].max_f, color = :blue,label = "Monthly max and min", linestyle=:dot, 
         xticks = xticks_base, yticks = yticks_base, ylims = ylims_base)
         plot!(plotdata[p].min_f, color = :blue,label = "", linestyle=:dot)

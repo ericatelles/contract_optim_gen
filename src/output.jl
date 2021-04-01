@@ -49,7 +49,7 @@ function calculateriskmesur(con::String, optimparam::OptimParameters, dimensions
             # CVaR
             vctC_anual = reshape(optimalcontract[con][p].C_anual[a,:,:],:) # Altera os dados da matriz ωXk para um vetor de dimensao ω*k para a funcao "calculateCVaR"
             vctCMU     = reshape(sum(optimalcontract[con][p].CMU[m,:,:] for m=1+(a-1)*dimensions.nper:a*dimensions.nmonths),:) # Altera os dados da matriz ωXk para um vetor de dimensao ω*k para a funcao "calculateCVaR"
-            vctCMS     = reshape(sum(optimalcontract[con][p].CMS[a,:,:] for m=1+(a-1)*dimensions.nper:a*dimensions.nmonths),:) # Altera os dados da matriz ωXk para um vetor de dimensao ω*k para a funcao "calculateCVaR"
+            vctCMS     = reshape(sum(optimalcontract[con][p].CMS[m,:,:] for m=1+(a-1)*dimensions.nper:a*dimensions.nmonths),:) # Altera os dados da matriz ωXk para um vetor de dimensao ω*k para a funcao "calculateCVaR"
             vctCMD     = reshape(sum(optimalcontract[con][p].CMD[m,:,:] for m=1+(a-1)*dimensions.nper:a*dimensions.nmonths),:) # Altera os dados da matriz ωXk para um vetor de dimensao ω*k para a funcao "calculateCVaR"
 
             CVaR_totalcost[a]    = calculateCVaR(vctC_anual,optimparam.α)
@@ -64,9 +64,9 @@ function calculateriskmesur(con::String, optimparam::OptimParameters, dimensions
             worstscen_maxdemcost[a]   = sort(vctCMD, rev=true)[1]
 
             #Probabilidade de penalidade
-            for m in Months
-                penaltyprob[(a-1)*dimensions.nmonths+m] = sum(length(optimalcontract[con][p].scen_penalty[(a-1)*dimensions.nmonths+m,k]) * (optimparam.probscen*optimparam.probtop[k]) for k in K) # Dentro de uma topologia, os cenários são equiprováveis. Assim a probabilidade de 1 cenário é prob[k], da topologia, multiplicada por probscen dos cenários. 
-                overcontprob[(a-1)*dimensions.nmonths+m] = sum(length(optimalcontract[con][p].scen_overcont[(a-1)*dimensions.nmonths+m,k]) * (optimparam.probscen*optimparam.probtop[k]) for k in K)
+            for m in Months, k in optimparam.topologyid
+                penaltyprob[(a-1)*dimensions.nmonths+m] = length(optimalcontract[con][p].scen_penalty[(a-1)*dimensions.nmonths+m,k])/dimensions.nscen 
+                overcontprob[(a-1)*dimensions.nmonths+m] = length(optimalcontract[con][p].scen_overcont[(a-1)*dimensions.nmonths+m,k])/dimensions.nscen 
             end
         end
 
@@ -128,10 +128,9 @@ function writeresultscsv(out_path::String,riskindicators::Dict,con::String,
         end
 
         # Indicadores de probabilidade
-        push!(reportdf, [a, "-", peaksnames[p], "PROBABILIDADE DE ULTRAPASSAGEM", riskindicators[con][p].penaltyprob[a]])
-
-        if optimparam.overcontflag == 1 # Só escreve indicadores de sobrecontratação se o usuário incluir ou se for otimização do must
-            push!(reportdf, [a, "-", peaksnames[p], "PROBABILIDADE DE SOBRECONTRATACAO", riskindicators[con][p].overcontprob[a]])
+        for m in 1:dimensions.nmonths
+            push!(reportdf, [a, m, peaksnames[p], "PROBABILIDADE DE ULTRAPASSAGEM", riskindicators[con][p].penaltyprob[(a-1)*dimensions.nmonths+m]])
+            push!(reportdf, [a, m, peaksnames[p], "PROBABILIDADE DE SOBRECONTRATACAO", riskindicators[con][p].overcontprob[(a-1)*dimensions.nmonths+m]])
         end
         
     end
