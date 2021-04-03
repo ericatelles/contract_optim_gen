@@ -104,119 +104,151 @@ function plotcen(infotuple::Tuple{Dimensions,OptimParameters,Dict},plotdatamwtup
 
     (dimensions,optimparam,peaksnames) = infotuple
     (out_path,con,plotdata) = plotdatamwtuple
-    xticks_base = 0:2:dimensions.nyear*dimensions.nmonths
-    
+        
     # Limites max e min do eixo y
     for p in optimparam.peaksid
-        y_interval = ceil((ceil(maximum(plotdata[p].f))-floor(minimum(plotdata[p].f)))/10)
-        if y_interval == 0 
-            y_interval = 1
-        end
-
-        yticks_base = floor(minimum(plotdata[p].f))-4*y_interval:y_interval:ceil(maximum(plotdata[p].f))+y_interval
-        ylims_base = (floor(minimum(plotdata[p].f))-4*y_interval,ceil(maximum(plotdata[p].f))+y_interval)
-        
-        plot(legend=:bottomright, foreground_color_legend = nothing)
-        plot!(plotdata[p].f[:,1], color = :lightgray,label = "", xticks = xticks_base, yticks = yticks_base, ylims = ylims_base)
-
-        plot!(plotdata[p].f[:,2:end], color = :lightgray,label = "")
-        xlabel!("Months")
-        ylabel!("MW")
-
-        # title!("Cenários de máxima injeção mensal - "*con*" "*peaksnames[p])
-        savefig(joinpath(out_path,"cenarios_$con$(peaksnames[p]).png"))
-
-        plot(legend=:bottomright, foreground_color_legend = nothing)
-        plot!(plotdata[p].f[:,1], color = :lightgray,label = "Scenarios", xticks = xticks_base, 
-            yticks = yticks_base, ylims = ylims_base)
-        
-        plot!(plotdata[p].f[:,2:end], color = :lightgray,label = "")
-
-        plot!(plotdata[p].penalty,color = :orange,label = "Penalty limits" ,linewidth=4.5)
-        plot!(plotdata[p].overcont,color = :orange,label = "" ,linewidth=4.5)
-        plot!(plotdata[p].optimalM,color = :blue,label = "Optimal contract",linewidth=4.5)
-        plot!(plotdata[p].optimalM .* (1+transparam.ϵU),color = :blue,label = "Regulated tolerance",linestyle=:dash,linewidth=5)
-        plot!(plotdata[p].optimalM .* (1-transparam.ϵS),color = :blue,label = "",linewidth=5,linestyle=:dash)
-
-        xlabel!("Months")
-        ylabel!("MW")
-
-        # title!("Cenários de máxima injeção mensal - "*con*" "*peaksnames[p])
-        savefig(joinpath(out_path,"cenarios_MUST_$con$(peaksnames[p]).png"))
-    end
-
-    return nothing
-end
-
-"""  Plot dos cenários de máxima demanda mensal com o MUST ótimo para um ponto de conexão """
-function plotcenMUST(infotuple::Tuple{Dimensions,OptimParameters,Dict},plotdatamwtuple::Tuple{String,String,Dict},transparam::TransGeneralParam)
-
-    (dimensions,optimparam,peaksnames) = infotuple
-    (out_path,con,plotdata) = plotdatamwtuple
-    xticks_base = 0:2:dimensions.nyear*dimensions.nmonths
-    
-    # Limites max e min do eixo y
-    for p in optimparam.peaksid
-        y_interval = ceil((ceil(maximum(plotdata[p].f))-floor(minimum(plotdata[p].f)))/10)
-        if y_interval == 0 
-            y_interval = 1
-        end
-        
-        yticks_base = floor(minimum(plotdata[p].f))-4*y_interval:y_interval:ceil(maximum(plotdata[p].f))+y_interval
-        ylims_base = (floor(minimum(plotdata[p].f))-4*y_interval,ceil(maximum(plotdata[p].f))+y_interval)
-        # yticks_base = 0:10:100
-        # ylims_base = (0,100)
-
-        plot(legend=:bottomright, foreground_color_legend = nothing)
-        plot!(plotdata[p].max_f, color = :blue,label = "Monthly max and min", linestyle=:dot, 
-        xticks = xticks_base, yticks = yticks_base, ylims = ylims_base)
-        plot!(plotdata[p].min_f, color = :blue,label = "", linestyle=:dot)
-
-        plot!(plotdata[p].quantile95_f, color = :black,label = "5%, 50% and 95% quantiles", linestyle=:dash)
-        plot!(plotdata[p].quantile50_f, color = :black,label = "", linestyle=:dash)
-        plot!(plotdata[p].quantile5_f, color = :black,label = "", linestyle=:dash)
-
-        xlabel!("Months")
-        ylabel!("MW")
-
-        plot!(plotdata[p].optimalM,color = :red,label = "Optimal contract",linewidth=2.5)
-        plot!(plotdata[p].penalty,color = :red,label = "Under and overcontracting limits" ,linewidth=2.5, linestyle=:dash)
-        plot!(plotdata[p].overcont,color = :red,label = "" ,linewidth=2.5, linestyle=:dash)
-        plot!(plotdata[p].optimalM .* (1+transparam.ϵU),color = :gray,label = "Regulated tolerance",linewidth=2.5, linestyle=:dash)
-        plot!(plotdata[p].optimalM .* (1-transparam.ϵS),color = :gray,label = "",linewidth=2.5, linestyle=:dash)
-
-        savefig(joinpath(out_path,"cenariosMUST_$con$(peaksnames[p]).png"))
-    end
-
-    return nothing
-end
-
-"""  Plot da divisão percentual dos cenários em faixas - Análise mensal """
-function plotpercentmonth(infotuple::Tuple{Dimensions,OptimParameters,Dict},plotdatapercenttuple::Tuple{String,String,Dict})
-
-    (dimensions,optimparam,peaksnames) = infotuple
-    (out_path,con,plotdatapercent) = plotdatapercenttuple
-
-    for a in 1:dimensions.nyear, p in optimparam.peaksid
-        if optimparam.overcontflag == 0
-            plotmatrix = [plotdatapercent[p].penalty[1+(a-1)*dimensions.nmonths:a*dimensions.nmonths] plotdatapercent[p].tolerance_up[1+(a-1)*dimensions.nmonths:a*dimensions.nmonths] plotdatapercent[p].tolerance_dwn[1+(a-1)*dimensions.nmonths:a*dimensions.nmonths]]
-            groupedbar(plotmatrix, bar_position = :stack, bar_width=1,xlabel = "Months", ylabel = "Probability",
-                xlims=(0.5,dimensions.nmonths+0.5),
-                xticks=1:dimensions.nmonths,
-                label = ["Undercontracting" "between 100% and 110%" "bellow 100%"],
-                color = [:red :orange :green])
+        if con == "Fronteira_1"
+            xticks_original = [0,11,23,35,47]
+            xticks_plot     = [1,12,24,36,48]
+        elseif con == "JUPIA-MIMOSO"
+            xticks_original = [0,2,5,8,11]
+            xticks_plot     = [1,3,6,9,12]
         else
-            plotmatrix = [plotdatapercent[p].penalty[1+(a-1)*dimensions.nmonths:a*dimensions.nmonths] plotdatapercent[p].tolerance_up[1+(a-1)*dimensions.nmonths:a*dimensions.nmonths] plotdatapercent[p].tolerance_dwn[1+(a-1)*dimensions.nmonths:a*dimensions.nmonths] plotdatapercent[p].overcont[1+(a-1)*dimensions.nmonths:a*dimensions.nmonths]]
-            groupedbar(plotmatrix, bar_position = :stack, bar_width=1,xlabel = "Months", ylabel = "Probability",
-                xlims=(0.5,dimensions.nmonths+0.5),
-                xticks=1:dimensions.nmonths,
-                label = ["Undercontracting" "between 100% and 110%" "between 100% and 90%" "Overcontracting"],
-                color = [:red :orange :green :purple])
+            xticks_original = [0,11,23,35,47]
+            xticks_plot     = [1,12,24,36,48]
+        end
+        linewdt_1 = 0.8
+        linewdt_2 = 1.2
+        fontsize_plot = 15
+
+        fig  = figure(figsize=(10,10))
+        plt1 = plot(plotdata[p].f[:,1], color = "gray",label = "Scenarios", linewidth=linewdt_1)
+        plt2 = plot(plotdata[p].f[:,2:end], color = "gray", linewidth=linewdt_1)
+
+        xlabel("Months", fontsize=fontsize_plot);
+        ylabel("MW", fontsize=fontsize_plot);
+        xlim(xmin=0)
+        
+        if con == "Fronteira_1"
+            ylim(ymin=35.0)
+            ylim(ymax=60.0)
+            xlim(xmax=47)
+        elseif con == "JUPIA-MIMOSO"
+            ylim(ymin=40.0)
+            xlim(xmax=11)
+        else
+            ylim(ymin=0.0)
         end
 
-        savefig(joinpath(out_path,"prob_mensal_cenarios_$con$(peaksnames[p])_ano$a.png"))
+        xticks(ticks=xticks_original, labels=xticks_plot)
+        legend(ncol=1, loc=3, fontsize=fontsize_plot,frameon=false)
+        tick_params(axis="both", labelsize=fontsize_plot)
+        # display(gcf())
+        savefig(joinpath(out_path,"cenarios.png"), dpi=300, bbox_inches="tight")
+
+        fig  = figure(figsize=(9,9))
+        plt1 = plot(plotdata[p].f[:,1], color = "gray",label = "Scenarios", linewidth=linewdt_1)
+        plt2 = plot(plotdata[p].f[:,2:end], color = "gray", linewidth=linewdt_1)
+        plt3 = plot(plotdata[p].penalty,color = "#cc7000",label = "Penalty limits" ,linewidth=linewdt_2)
+        plt4 = plot(plotdata[p].overcont,color = "#cc7000",linewidth=linewdt_2)
+        plt5 = plot(plotdata[p].optimalM,color = "blue",label = "Optimal contract",linewidth=linewdt_2)
+        plt6 = plot(plotdata[p].optimalM .* (1+transparam.ϵU),color = "blue",label = "Regulated tolerance",linestyle="dashed",linewidth=linewdt_2)
+        plt7 = plot(plotdata[p].optimalM .* (1-transparam.ϵS),color = "blue",linewidth=linewdt_2,linestyle="dashed")
+
+        xlabel("Months", fontsize=fontsize_plot);
+        ylabel("MW", fontsize=fontsize_plot);
+        xlim(xmin=0)
+
+        if con == "Fronteira_1"
+            ylim(ymin=35.0)
+            ylim(ymax=60.0)
+            xlim(xmax=47)
+        elseif con == "JUPIA-MIMOSO"
+            ylim(ymin=40.0)
+            xlim(xmax=11)
+        else
+            ylim(ymin=0.0)
+        end
+
+        xticks(ticks=xticks_original, labels=xticks_plot)
+        legend(ncol=2, loc=3, fontsize=fontsize_plot,frameon=false)
+        tick_params(axis="both", labelsize=fontsize_plot)
+        # display(gcf())
+        savefig(joinpath(out_path,"cenarios_MUST_$con$(peaksnames[p]).png"), dpi=300, bbox_inches="tight")
     end
 
     return nothing
 end
+
+# """  Plot dos cenários de máxima demanda mensal com o MUST ótimo para um ponto de conexão """
+# function plotcenMUST(infotuple::Tuple{Dimensions,OptimParameters,Dict},plotdatamwtuple::Tuple{String,String,Dict},transparam::TransGeneralParam)
+
+#     (dimensions,optimparam,peaksnames) = infotuple
+#     (out_path,con,plotdata) = plotdatamwtuple
+#     xticks_base = 0:2:dimensions.nyear*dimensions.nmonths
+    
+#     # Limites max e min do eixo y
+#     for p in optimparam.peaksid
+#         y_interval = ceil((ceil(maximum(plotdata[p].f))-floor(minimum(plotdata[p].f)))/10)
+#         if y_interval == 0 
+#             y_interval = 1
+#         end
+        
+#         yticks_base = floor(minimum(plotdata[p].f))-4*y_interval:y_interval:ceil(maximum(plotdata[p].f))+y_interval
+#         ylims_base = (floor(minimum(plotdata[p].f))-4*y_interval,ceil(maximum(plotdata[p].f))+y_interval)
+#         # yticks_base = 0:10:100
+#         # ylims_base = (0,100)
+
+#         plot(legend=:bottomright, foreground_color_legend = nothing)
+#         plot!(plotdata[p].max_f, color = :blue,label = "Monthly max and min", linestyle=:dot, 
+#         xticks = xticks_base, yticks = yticks_base, ylims = ylims_base)
+#         plot!(plotdata[p].min_f, color = :blue,label = "", linestyle=:dot)
+
+#         plot!(plotdata[p].quantile95_f, color = :black,label = "5%, 50% and 95% quantiles", linestyle=:dash)
+#         plot!(plotdata[p].quantile50_f, color = :black,label = "", linestyle=:dash)
+#         plot!(plotdata[p].quantile5_f, color = :black,label = "", linestyle=:dash)
+
+#         xlabel!("Months")
+#         ylabel!("MW")
+
+#         plot!(plotdata[p].optimalM,color = :red,label = "Optimal contract",linewidth=2.5)
+#         plot!(plotdata[p].penalty,color = :red,label = "Under and overcontracting limits" ,linewidth=2.5, linestyle=:dash)
+#         plot!(plotdata[p].overcont,color = :red,label = "" ,linewidth=2.5, linestyle=:dash)
+#         plot!(plotdata[p].optimalM .* (1+transparam.ϵU),color = :gray,label = "Regulated tolerance",linewidth=2.5, linestyle=:dash)
+#         plot!(plotdata[p].optimalM .* (1-transparam.ϵS),color = :gray,label = "",linewidth=2.5, linestyle=:dash)
+
+#         savefig(joinpath(out_path,"cenariosMUST_$con$(peaksnames[p]).png"))
+#     end
+
+#     return nothing
+# end
+
+# """  Plot da divisão percentual dos cenários em faixas - Análise mensal """
+# function plotpercentmonth(infotuple::Tuple{Dimensions,OptimParameters,Dict},plotdatapercenttuple::Tuple{String,String,Dict})
+
+#     (dimensions,optimparam,peaksnames) = infotuple
+#     (out_path,con,plotdatapercent) = plotdatapercenttuple
+
+#     for a in 1:dimensions.nyear, p in optimparam.peaksid
+#         if optimparam.overcontflag == 0
+#             plotmatrix = [plotdatapercent[p].penalty[1+(a-1)*dimensions.nmonths:a*dimensions.nmonths] plotdatapercent[p].tolerance_up[1+(a-1)*dimensions.nmonths:a*dimensions.nmonths] plotdatapercent[p].tolerance_dwn[1+(a-1)*dimensions.nmonths:a*dimensions.nmonths]]
+#             groupedbar(plotmatrix, bar_position = :stack, bar_width=1,xlabel = "Months", ylabel = "Probability",
+#                 xlims=(0.5,dimensions.nmonths+0.5),
+#                 xticks=1:dimensions.nmonths,
+#                 label = ["Undercontracting" "between 100% and 110%" "bellow 100%"],
+#                 color = [:red :orange :green])
+#         else
+#             plotmatrix = [plotdatapercent[p].penalty[1+(a-1)*dimensions.nmonths:a*dimensions.nmonths] plotdatapercent[p].tolerance_up[1+(a-1)*dimensions.nmonths:a*dimensions.nmonths] plotdatapercent[p].tolerance_dwn[1+(a-1)*dimensions.nmonths:a*dimensions.nmonths] plotdatapercent[p].overcont[1+(a-1)*dimensions.nmonths:a*dimensions.nmonths]]
+#             groupedbar(plotmatrix, bar_position = :stack, bar_width=1,xlabel = "Months", ylabel = "Probability",
+#                 xlims=(0.5,dimensions.nmonths+0.5),
+#                 xticks=1:dimensions.nmonths,
+#                 label = ["Undercontracting" "between 100% and 110%" "between 100% and 90%" "Overcontracting"],
+#                 color = [:red :orange :green :purple])
+#         end
+
+#         savefig(joinpath(out_path,"prob_mensal_cenarios_$con$(peaksnames[p])_ano$a.png"))
+#     end
+
+#     return nothing
+# end
 

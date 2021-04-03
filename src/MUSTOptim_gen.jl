@@ -1,5 +1,5 @@
 module MUSTOptim_gen
-    using JLD, JuMP, Cbc, CSV, DataFrames, DelimitedFiles, Dates, Statistics, Plots, Plots.PlotMeasures, StatsPlots
+    using JLD, JuMP, Cbc, CSV, DataFrames, DelimitedFiles, Dates, Statistics, PyPlot#, StatsPlots
     
     # Comandos para tratamento de uma issue em aberto para o julia 0.7 ou superior (https://github.com/JuliaIO/JLD.jl/issues/216)
     Core.eval(Main, :(import JLD))
@@ -16,8 +16,8 @@ module MUSTOptim_gen
     export calculateCVaR, calculateriskmesur, writeresultscsv # arquivo output.jl
     export plotdatamwconstruct, plotcen, plotcenMUST, plotultrapcenMUST, plotsobreccenMUST,
         plotdatapercentconstruct, plotpercentmonth, plotpercentyear, plotdemvariation # arquivo plots.jl
-    export demandcontract, sensitivity
-    export tariff_sensitivity, plot_tariff_sensitivity, risk_sensitivity, plot_risk_sensitivity
+    export demandcontract, sensitivity_tariff, sensitivity_risk
+    export tariff_sensitivity, plot_tariff_sensitivity, risk_sensitivity, plot_risk_sensitivity, risk_fobj_sensitivity, plot_risk_fobj_sensitivity
         
     # Arquivos de funções
     include("structs.jl")
@@ -70,8 +70,8 @@ module MUSTOptim_gen
             plotdatapercenttuple = (out_path, con, plotdatapercent[con])
 
             plotcen(infotuple, plotdatamwtuple, transparam)
-            plotcenMUST(infotuple, plotdatamwtuple, transparam)
-            plotpercentmonth(infotuple,plotdatapercenttuple)
+            # plotcenMUST(infotuple, plotdatamwtuple, transparam)
+            # plotpercentmonth(infotuple,plotdatapercenttuple)
 
             @info("Fim da escrita de arquivos de saída para a conexão $con.")
         end
@@ -82,12 +82,12 @@ module MUSTOptim_gen
         
     end
 
-    """ sensitivityanalisys(path::String, tariffoptions::Array{String}, initialvalue::FLoat64, finalvalue::Float64, step::Float64)
-    Performs a tariff sensitivity analisys 
+    """ sensitivityanalisys_tariff(path::String, tariffoptions::Array{String}, initialvalue::FLoat64, finalvalue::Float64, step::Float64)
+    Performs a tariff sensitivity analisys on tariff values
     Args.:
     path: diretório dos arquivos de parâmetros e de dados de entrada
     """
-    function sensitivity(path::String,tariff_options::Array{String},initial_value::Float64,final_value::Float64,step::Float64, month::Int64, year::Int64)
+    function sensitivity_tariff(path::String,tariff_options::Array{String},initial_value::Float64,final_value::Float64,step::Float64, month::Int64, year::Int64)
         for tariff_in_analisys in tariff_options
 
             dimensions, optimparam, transparam, busdata, peaksnames, study_name = readdata(path)
@@ -98,24 +98,31 @@ module MUSTOptim_gen
 
             plot_tariff_sensitivity(path, study_name, tariff_in_analisys, initial_value, final_value, step, optimalcontract_sensitivity, plotdatamw_sensitivity, optimparam, 
                 busdata, transparam, peaksnames, riskindicators_sensitivity, month, year, dimensions)
-
-            # Risk sensitivity study
-            dimensions, optimparam, transparam, busdata, peaksnames, study_name = readdata(path)
-
-            optimalresults_risk, optimalcontract_risk, riskindicators_risk, plotdatamw_risk, plotdatapercent_risk, optimparam, transparam = risk_sensitivity(initial_value, final_value,
-                step, optimparam, busdata, transparam, dimensions)
-
-            plot_risk_sensitivity(path, study_name, initial_value, final_value, step, optimalcontract_risk, plotdatamw_risk, optimparam, busdata, transparam, peaksnames,
-                riskindicators_risk, month, year, dimensions)
-
-            # Risk sensitivity objective function study
-            dimensions, optimparam, transparam, busdata, peaksnames, study_name = readdata(path)
-            
-            optimalresults_risk, optimalcontract_risk, riskindicators_risk, plotdatamw_risk, plotdatapercent_risk, optimparam, transparam = risk_fobj_sensitivity(initial_value, final_value,
-                step, optimparam, busdata, transparam, dimensions)
-
-            plot_risk_fobj_sensitivity(path, study_name, initial_value, final_value, step, optimalcontract_risk, plotdatamw_risk, optimparam, busdata, transparam, peaksnames,
-                riskindicators_risk, month, year, dimensions)
         end
+    end
+
+    """ sensitivityanalisys_risk(path::String, initialvalue::FLoat64, finalvalue::Float64, step::Float64)
+    Performs a tariff sensitivity analisys on risk parameters 
+    Args.:
+    path: diretório dos arquivos de parâmetros e de dados de entrada
+    """
+    function sensitivity_risk(path::String,initial_value::Float64,final_value::Float64,step::Float64, month::Int64, year::Int64)
+        # Risk sensitivity study
+        dimensions, optimparam, transparam, busdata, peaksnames, study_name = readdata(path)
+
+        optimalresults_risk, optimalcontract_risk, riskindicators_risk, plotdatamw_risk, plotdatapercent_risk, optimparam, transparam = risk_sensitivity(initial_value, final_value,
+            step, optimparam, busdata, transparam, dimensions)
+
+        plot_risk_sensitivity(path, study_name, initial_value, final_value, step, optimalcontract_risk, plotdatamw_risk, optimparam, busdata, transparam, peaksnames,
+            riskindicators_risk, month, year, dimensions)
+
+        # Risk sensitivity objective function study
+        dimensions, optimparam, transparam, busdata, peaksnames, study_name = readdata(path)
+            
+        optimalresults_risk, optimalcontract_risk, riskindicators_risk, plotdatamw_risk, plotdatapercent_risk, optimparam, transparam = risk_fobj_sensitivity(initial_value, final_value,
+            step, optimparam, busdata, transparam, dimensions)
+
+        plot_risk_fobj_sensitivity(path, study_name, initial_value, final_value, step, optimalcontract_risk, plotdatamw_risk, optimparam, busdata, transparam, peaksnames,
+            riskindicators_risk, month, year, dimensions)
     end
 end
